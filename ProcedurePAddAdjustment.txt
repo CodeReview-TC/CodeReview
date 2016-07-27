@@ -1,0 +1,30 @@
+======OBJECT = ProcedurePAddAdjustment === Generate Adjustment=====
+=== RULES ===
+parm(in:&ImpStoreNumber, in:&ImpUnitNumber, in:&ImpBookID, in:&BkClID , in:&ImpOrgNewQty, in:&ImpOrgUsedQty, in:&AdjReason, 
+in:&AdjNotes, in:&WantLstId, in:&AdjRefNbr, in:&IvMCIT, in:&UpdMCITFlag, out:&AdjId);
+
+/*
+2011-10-03: Only added this comment
+        IvMCIT : Most Current Input Term
+        
+        Reason: Manual Fix only updates InProcess Inventory
+
+*/
+
+=== PROCEDURE SOURCE ===
+//lali recovered this... not sure if i wont' break something though i should not since this is not rpg...
+PLoadContext.Call(&Context)
+&UsrID      = &context.UserID
+&traceToDB  = &context.TraceToDb
+&TraceToLog = &context.TraceToLog
+&traceLevel = &Context.TraceLevel
+
+&Message.Type = MessageTypes.Verbose
+&Message.Description = "Add Adj. Str " + trim(str(&ImpStoreNumber)) + " Unt " + trim(str(&ImpUnitNumber)) + " Book " + trim(str(&ImpBookID)) + " cls " + trim(str(&bkclid)) + " new " + trim(str(&ImpOrgNewQty)) +
+    " used " + trim(str(&ImpOrgUsedQty))
+PTraceLog.Call(&Pgmname, &Message)
+
+&pAdjAdd.pAdjAdd(&ImpStoreNumber, &ImpUnitNumber, &ImpBookID, &BKCLID,
+&ImpOrgNewQty, &ImpOrgUsedQty, &AdjReason, &AdjNotes, &WantLstId, &AdjRefNbr, &IvMCIT, &UpdMCITFlag,
+&UsrID, &TraceToDb, &TraceToLog,&traceLevel, &AdjId)
+

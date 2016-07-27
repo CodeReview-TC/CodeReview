@@ -1,0 +1,59 @@
+======OBJECT = ProcedurePAdjRef === Determine Adjustment Reference=====
+=== RULES ===
+parm(in:&AdjReason, out:&AdjRefPrc);
+
+=== PROCEDURE SOURCE ===
+
+// CDM - 29/04/2013 added TA2 Classification
+
+do case
+    case &AdjReason = AdjReasons.Import or
+         &AdjReason = AdjReasons.ImportDeactivate or
+         &AdjReason = AdjReasons.ImportMerge
+         &AdjRefPrc = 'IMPORT'
+
+    case &AdjReason = AdjReasons.Manual
+         &AdjRefPrc = 'ADDIVMAN'
+
+    case &AdjReason = AdjReasons.ManualFix
+         &AdjRefPrc = 'MANUAL FIX'
+
+    case &AdjReason = AdjReasons.MarkDownJunk or
+         &AdjReason = AdjReasons.MarkDownLost or
+         &AdjReason = AdjReasons.MarkDownMBS
+         &AdjRefPrc = 'CLEAN UP'
+
+    case &AdjReason = AdjReasons.Deactivate or
+         &AdjReason = AdjReasons.Merge
+         &AdjRefPrc = 'MAN MERGE'
+
+    case &AdjReason = AdjReasons.Move
+          &AdjRefPrc = 'MAN MOVE'
+
+    case &AdjReason = AdjReasons.ReceiveRetail or
+         &AdjReason = AdjReasons.Receiving or
+         &AdjReason = AdjReasons.ReceivingDiscrepancyMore or
+         &AdjReason = AdjReasons.ReceivingDiscrepancyShort or
+         &AdjReason = AdjReasons.Request or
+         &AdjReason = AdjReasons.Shipping or
+         &AdjReason = AdjReasons.ShippingDiscrepancy or
+         &AdjReason = AdjReasons.UndoRequest
+         &AdjRefPrc = 'TRANSFER'
+
+    case &AdjReason = AdjReasons.Reclassification
+         &AdjRefPrc = 'RECLASS'
+
+    case &AdjReason = AdjReasons.RGIS
+         &AdjRefPrc = 'RGIS'
+
+    case &AdjReason = AdjReasons.StoreClosing
+         &AdjRefPrc = 'MANSTRCLOSE'
+
+    case &AdjReason = AdjReasons.TA2ClassDecrease or 
+         &AdjReason = AdjReasons.TA2ClassIncrease
+        &AdjRefPrc = 'TA2CLASS'
+
+    case &AdjReason = AdjReasons.Manual
+         &AdjRefPrc = 'INVSYNCH'
+endcase
+

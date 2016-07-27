@@ -1,0 +1,95 @@
+======OBJECT = ProcedurePAdjCalc === Calculate Adjustment=====
+=== RULES ===
+parm(in:&AdjReason, in:&ImpOrgNewQty, in:&ImpOrgUsedQty, out:&InvNewQtyAvailable, out:&InvUseQtyAvailable, out:&InvNewQtyProc, out:&InvUseQtyProc);
+
+=== PROCEDURE SOURCE ===
+// cdm - 2013.29.04 - added AdjReasons.T2Class*
+// CDM - 2009.12.08 - Add AdjReason.UndoRequest
+// 2016-04-19	AMM	TA2-709. Added AdjReasons.Liquidation
+
+&MessageType = MessageTypes.Verbose
+&MessageDescription = 'AdjReason ' + &AdjReason                       
+PTrcMsg.Call(&Pgmname, &MessageDescription, &MessageType, &usrId, &TraceToDB, &TraceToLog, &TraceLevel, Boolean.FALSE)
+
+
+&InvNewQtyAvailable  = 0
+&InvUseQtyAvailable  = 0
+&InvNewQtyProc       = 0
+&InvUseQtyProc       = 0
+
+Do Case
+                                                        //Import affects the availble. Same with manual because is the same idea   
+                                                        //RGIS also updates available inventory for whatever RGIS indicates
+    Case &AdjReason = AdjReasons.Import or &AdjReason = AdjReasons.Manual or &AdjReason = AdjReasons.RGIS or
+         &AdjReason = AdjReasons.Merge  or &AdjReason = AdjReasons.Move   or &AdjReason = AdjReasons.ImportMerge or
+         &AdjReason = AdjReasons.InvSynch
+        &InvNewQtyAvailable  += &ImpOrgNewQty
+        &InvUseQtyAvailable  += &ImpOrgUsedQty
+    
+    Case &AdjReason = AdjReasons.Request or &AdjReason = AdjReasons.LiquidationRequest     //decrease available
+        &InvNewQtyAvailable   -= &ImpOrgNewQty            
+        &InvUseQtyAvailable   -= &ImpOrgUsedQty
+        &InvNewQtyProc        += &ImpOrgNewQty
+        &InvUseQtyProc        += &ImpOrgUsedQty
+
+    Case &AdjReason = AdjReasons.UndoRequest     
+        &InvNewQtyAvailable   += &ImpOrgNewQty            
+        &InvUseQtyAvailable   += &ImpOrgUsedQty
+        &InvNewQtyProc        -= &ImpOrgNewQty
+        &InvUseQtyProc        -= &ImpOrgUsedQty  
+
+    Case &AdjReason = AdjReasons.ShippingDiscrepancy or &AdjReason = AdjReasons.LiquidationShippingDiscrepancy
+        &InvNewQtyProc       -= &ImpOrgNewQty           
+        &InvUseQtyProc       -= &ImpOrgUsedQty
+    
+    Case &AdjReason = AdjReasons.Receiving or &AdjReason = AdjReasons.LiquidationShipping    //decrease in process. Inventory is now gone.
+        &InvNewQtyProc       -= &ImpOrgNewQty           
+        &InvUseQtyProc       -= &ImpOrgUsedQty
+    
+    Case &AdjReason = AdjReasons.ReceiveRetail    //call API
+        &InvNewQtyAvailable       += &ImpOrgNewQty           
+        &InvUseQtyAvailable       += &ImpOrgUsedQty
+    
+    Case &AdjReason = AdjReasons.ReceivingDiscrepancyShort    //decrease in process. Inventory is now gone.
+        &InvNewQtyProc        -= &ImpOrgNewQty            //
+        &InvUseQtyProc        -= &ImpOrgUsedQty
+    
+    Case &AdjReason = AdjReasons.ReceivingDiscrepancyMore or
+         &AdjReason = AdjReasons.TA2ClassIncrease   // added by cdm on 04/29/201 - issue 1055
+        &InvNewQtyAvailable  += &ImpOrgNewQty
+        &InvUseQtyAvailable  += &ImpOrgUsedQty
+    
+    Case &AdjReason = AdjReasons.StoreClosing or &AdjReason = AdjReasons.MarkDownJunk or 
+         &AdjReason = AdjReasons.MarkDownMBS  or &AdjReason = AdjReasons.MarkDownLost or 
+         &AdjReason = AdjReasons.Deactivate   or &AdjReason = AdjReasons.ImportDeactivate or
+         &AdjReason = AdjReasons.TA2ClassDecrease   // added by cdm on 04/29/201 - issue 1055
+        &InvNewQtyAvailable   -= &ImpOrgNewQty
+        &InvUseQtyAvailable   -= &ImpOrgUsedQty
+    
+    case &AdjReason = AdjReasons.Reclassification
+        &InvNewQtyAvailable   += &ImpOrgNewQty
+        &InvUseQtyAvailable   += &ImpOrgUsedQty
+
+    Case &AdjReason = AdjReasons.ManualFix
+        &InvNewQtyProc       += &ImpOrgNewQty
+        &InvUseQtyProc       += &ImpOrgUsedQty
+        &InvNewQtyAvailable  = 0
+        &InvUseQtyAvailable  = 0
+    
+
+    
+//    Otherwise
+//        &MessageType = MessageTypes.Error
+//        &MessageDescription = 'Inv Store=' + &StrNumber.ToString() +  ' Unit=' + &UntNumber.ToString() +
+//                           ' Book=' + &BkId.ToString()+ ' Cls =' + &BkClsId.ToString() +
+//                           ' Unexpected Adjustment ' + &AdjReason.ToString()
+//                           
+//        PTrcMsg.Call(&Pgmname, &MessageDescription, &MessageType, &usrId, &TraceToDB, &TraceToLog, &TraceLevel, Boolean.FALSE)
+    
+EndCase
+
+&MessageDescription = '&InvNewQtyAvailable ' + &InvNewQtyAvailable.ToString()                       
+PTrcMsg.Call(&Pgmname, &MessageDescription, &MessageType, &usrId, &TraceToDB, &TraceToLog, &TraceLevel, Boolean.FALSE)
+&MessageDescription = '&InvUseQtyAvailable ' + &InvUseQtyAvailable.ToString()                       
+PTrcMsg.Call(&Pgmname, &MessageDescription, &MessageType, &usrId, &TraceToDB, &TraceToLog, &TraceLevel, Boolean.FALSE)
+

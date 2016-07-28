@@ -2,11 +2,15 @@
 === RULES ===
 parm(in: &LqTskId);
 
+
 === PROCEDURE SOURCE ===
 /*
 	2016-02-25 DV Created
 */
 
+
+
+/asdsadasdsadadasd
 //Get head data
 for each 	//LqTsk
 	where LqTskId = &LqTskId
